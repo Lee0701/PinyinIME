@@ -179,7 +179,8 @@ public class PinyinDecoderService extends Service {
         }
 
         public int imSearch(byte[] pyBuf, int pyLen) {
-            return nativeImSearch(pyBuf, pyLen);
+            int safeLength = Math.min(Math.min(pyLen, pyBuf.length), PinyinInputLimits.MAX_INPUT_LENGTH);
+            return nativeImSearch(pyBuf, safeLength);
         }
 
         public int imDelSearch(int pos, boolean is_pos_in_splid,

@@ -16,6 +16,7 @@
 
 #include <assert.h>
 //#include <cutils/log.h>
+#define LOG_FATAL_IF
 #include <jni.h>
 #include <string.h>
 #include <sys/types.h>
@@ -32,6 +33,9 @@ extern "C" {
 using namespace ime_pinyin;
 
 #define RET_BUF_LEN 256
+
+static_assert(kMaxSearchSteps <= RET_BUF_LEN,
+              "The JNI return buffer must hold the complete Pinyin string");
 
 static char16 retbuf[RET_BUF_LEN];
 static char16 (*predict_buf)[kMaxPredictSize + 1] = NULL;
@@ -98,14 +102,22 @@ JNIEXPORT jboolean JNICALL nativeImCloseDecoder(JNIEnv* env, jclass jclazz) {
 
 JNIEXPORT jint JNICALL nativeImSearch(JNIEnv* env, jclass jclazz,
                                       jbyteArray pybuf, jint pylen) {
+  if (NULL == pybuf || pylen < 0)
+    return 0;
+
+  jsize pybuf_len = (*env).GetArrayLength(pybuf);
+  if (pylen > pybuf_len)
+    pylen = pybuf_len;
+  if (pylen > static_cast<jint>(kMaxSearchSteps - 1))
+    pylen = static_cast<jint>(kMaxSearchSteps - 1);
+
   jbyte *array_body = (*env).GetByteArrayElements(pybuf, 0);
 
   jint jret = 0;
   if (NULL != array_body) {
     jret = im_search((const char*)array_body, pylen);
+    (*env).ReleaseByteArrayElements(pybuf, array_body, JNI_ABORT);
   }
-
-  (*env).ReleaseByteArrayElements(pybuf, array_body, 0);
 
   return jret;
 }
@@ -388,11 +400,11 @@ static int registerNativeMethods(JNIEnv* env, const char* className,
     }
 
     clazz = env->FindClass("java/io/FileDescriptor");
-//    LOG_FATAL_IF(clazz == NULL, "Unable to find Java class java.io.FileDescriptor");
+    LOG_FATAL_IF(clazz == NULL, "Unable to find Java class java.io.FileDescriptor");
     gFileDescriptorOffsets.mClass = (jclass) env->NewGlobalRef(clazz);
     gFileDescriptorOffsets.mDescriptor = env->GetFieldID(clazz, "descriptor", "I");
-//    LOG_FATAL_IF(gFileDescriptorOffsets.mDescriptor == NULL,
-//                 "Unable to find descriptor field in java.io.FileDescriptor");
+    LOG_FATAL_IF(gFileDescriptorOffsets.mDescriptor == NULL,
+                 "Unable to find descriptor field in java.io.FileDescriptor");
 
     return JNI_TRUE;
 }

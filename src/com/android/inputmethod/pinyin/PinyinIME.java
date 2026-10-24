@@ -1647,11 +1647,13 @@ public class PinyinIME extends InputMethodService {
         }
 
         public boolean isSplStrFull() {
-            if (mSurface.length() >= PY_STRING_MAX - 1) return true;
-            return false;
+            return !PinyinInputLimits.canApplyEdit(mSurface.length(), 0, 1);
         }
 
         public void addSplChar(char ch, boolean reset) {
+            int currentLength = reset ? 0 : getOrigianlSplStr().length();
+            if(!PinyinInputLimits.canApplyEdit(currentLength, 0, 1)) return;
+
             if (reset) {
                 mSurface.delete(0, mSurface.length());
                 mSurfaceDecodedLen = 0;
@@ -1776,7 +1778,7 @@ public class PinyinIME extends InputMethodService {
                         totalChoicesNum = 0;
                     } else {
                         if (mPyBuf == null)
-                            mPyBuf = new byte[PY_STRING_MAX];
+                            mPyBuf = new byte[PinyinInputLimits.BUFFER_SIZE];
                         for (int i = 0; i < length(); i++)
                             mPyBuf[i] = (byte) charAt(i);
                         mPyBuf[length()] = 0;
