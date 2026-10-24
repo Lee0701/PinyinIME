@@ -1,0 +1,79 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:9.4.1'
+    }
+}
+
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.android.inputmethod.pinyin'
+    compileSdkVersion 37
+
+    // Required if using classes in android.test.runner
+    useLibrary 'android.test.runner'
+
+    // Required if using classes in android.test.base
+    useLibrary 'android.test.base'
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 37
+        versionName "1.0"
+
+        applicationId 'com.android.inputmethod.pinyin'
+        vectorDrawables.useSupportLibrary = false
+
+        signingConfig signingConfigs.debug
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard.flags'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    flavorDimensions = ["default"]
+
+    sourceSets {
+        main {
+            res.srcDirs = ['res']
+            java.srcDirs = ['src']
+            manifest.srcFile 'AndroidManifest.xml'
+        }
+    }
+
+
+    externalNativeBuild {
+        ndkBuild {
+            path 'Android.mk'
+        }
+    }
+    ndkVersion '29.0.14206865'
+    androidResources {
+        noCompress = 'dat'
+    }
+    lint {
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+
+    testImplementation 'junit:junit:4.13.2'
+    implementation 'androidx.annotation:annotation:1.11.0'
+}
